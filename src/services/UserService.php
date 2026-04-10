@@ -1,13 +1,17 @@
 <?php
 
 require_once __DIR__ . '/../dao/UserDAO.php';
+require_once __DIR__ . '/../dao/AddressDAO.php';
 require_once __DIR__ . '/../models/User.php';
+require_once __DIR__ . '/../models/Address.php';
 
 class UserService {
     private UserDAO $dao;
+    private AddressDAO $addressDao;
 
-    public function __construct(UserDAO $dao) {
+    public function __construct(UserDAO $dao, AddressDAO $addressDao) {
         $this->dao = $dao;
+        $this->addressDao = $addressDao;
     }
 
     public function register(array $data, string $requestedRole = 'cliente'): array {
@@ -15,10 +19,15 @@ class UserService {
         $phone = trim($data['phone'] ?? '');
         $email = trim($data['email'] ?? '');
         $password = $data['password'] ?? '';
-        $address = trim($data['address'] ?? '');
+        $street = trim($data['street'] ?? '');
+        $complement = trim($data['complement'] ?? '');
+        $neighborhood = trim($data['neighborhood'] ?? '');
+        $city = trim($data['city'] ?? '');
+        $state = trim($data['state'] ?? '');
+        $zipCode = trim($data['zip_code'] ?? '');
 
-        if ($name === '' || $phone === '' || $email === '' || $password === '' || $address === '') {
-            return ['success' => false, 'message' => 'Preencha todos os campos.'];
+        if ($name === '' || $phone === '' || $email === '' || $password === '' || $street === '' || $neighborhood === '' || $city === '' || $state === '' || $zipCode === '') {
+            return ['success' => false, 'message' => 'Preencha todos os campos obrigatórios.'];
         }
 
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -34,8 +43,19 @@ class UserService {
             $role = 'cliente';
         }
 
+        $address = new Address(
+            null,
+            $street,
+            $complement !== '' ? $complement : null,
+            $city,
+            $state,
+            $neighborhood,
+            $zipCode
+        );
+
+        $addressId = $this->addressDao->save($address);
         $hash = password_hash($password, PASSWORD_DEFAULT);
-        $user = new User(null, $name, $phone, $email, $hash, $address, $role);
+        $user = new User(null, $name, $phone, $email, $hash, $addressId, $address->getFullAddress(), $role);
         $this->dao->save($user);
 
         return ['success' => true, 'message' => 'Conta criada com sucesso! Agora faça login.'];

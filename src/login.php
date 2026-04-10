@@ -37,30 +37,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 include 'partials/header.php';
 ?>
-<main class="flex-grow justify-center items-center flex">
-    <div class="container mx-auto p-6 bg-white shadow-sm rounded-md max-w-md">
-    <h1 class="text-2xl font-bold mb-4">Login</h1>
+ <main class="flex-grow flex items-center justify-center px-6 py-16">
+  <div style="width:100%;max-width:400px">
+
+    <h1 style="font-family:'DM Serif Display',serif;font-size:32px;font-weight:400;letter-spacing:-0.01em;margin:0 0 6px">
+      Bem-vindo.
+    </h1>
+    <p style="font-size:13px;color:var(--muted);margin:0 0 2.5rem;font-weight:300">
+      Acesse sua conta para continuar.
+    </p>
+
     <?php if ($message): ?>
-        <div class="mb-4 p-3 rounded-md bg-slate-100 text-slate-800"><?= htmlspecialchars($message) ?></div>
+      <div style="background:rgba(226,75,74,0.08);border:1px solid rgba(226,75,74,0.2);border-radius:8px;padding:10px 14px;font-size:13px;color:#f09595;margin-bottom:1.5rem">
+        <?= htmlspecialchars($message) ?>
+      </div>
     <?php endif ?>
-    <form method="post" class="space-y-4">
-        <label class="block">
-            <span class="font-semibold">E-mail</span>
-            <input type="email" name="email" value="<?= htmlspecialchars($_POST['email'] ?? '') ?>" class="w-full border rounded px-3 py-2" required>
-        </label>
-        <label class="block">
-            <span class="font-semibold">Senha</span>
-            <input type="password" name="password" class="w-full border rounded px-3 py-2" required>
-        </label>
-        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Entrar</button>
+
+    <form method="post" class="space-y-5">
+      <label class="block">
+        <span style="display:block;font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:rgba(240,236,228,0.4);margin-bottom:8px">E-mail</span>
+        <input type="email" name="email" value="<?= htmlspecialchars($_POST['email'] ?? '') ?>"
+          style="width:100%;background:rgba(240,236,228,0.04);border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--cream);outline:none;box-sizing:border-box"
+          placeholder="seu@email.com" required>
+      </label>
+
+      <label class="block">
+        <span style="display:block;font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:rgba(240,236,228,0.4);margin-bottom:8px">Senha</span>
+        <input type="password" name="password"
+          style="width:100%;background:rgba(240,236,228,0.04);border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--cream);outline:none;box-sizing:border-box"
+          placeholder="••••••••" required>
+      </label>
+
+      <button type="submit"
+        style="width:100%;padding:13px;background:var(--cream);color:var(--bg);border:none;border-radius:8px;font-size:13px;font-weight:500;font-family:'DM Sans',sans-serif;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;transition:opacity 0.2s">
+        Entrar
+      </button>
     </form>
-    <p class="mt-4 text-sm text-slate-600">Não tem conta? <a href="register.php" class="text-blue-600">Cadastre-se</a></p>
-    <div class="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-4 text-slate-700">
-        <p class="font-semibold">SuperUser seeded</p>
-        <p class="text-sm">E-mail: <span class="font-medium">superuser@example.com</span></p>
-        <p class="text-sm">Senha: <span class="font-medium">superpass123</span></p>
-        <p class="text-xs text-slate-500 mt-2">Este SuperUser já é criado no init.sql.</p>
+
+    <p style="margin-top:1.5rem;font-size:12.5px;color:rgba(240,236,228,0.3);text-align:center">
+      Não tem conta? <a href="register.php" style="color:rgba(240,236,228,0.65);border-bottom:1px solid rgba(240,236,228,0.2);text-decoration:none">Cadastre-se</a>
+    </p>
+
+    <hr style="border:none;border-top:1px solid rgba(240,236,228,0.06);margin:2rem 0">
+
+    <div style="background:rgba(240,236,228,0.03);border:1px solid rgba(240,236,228,0.07);border-radius:8px;padding:14px 16px">
+      <p style="font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:rgba(240,236,228,0.3);margin:0 0 8px">SuperUser seeded</p>
+      <p style="font-size:12.5px;color:rgba(240,236,228,0.4);margin:3px 0">E-mail: <span style="color:rgba(240,236,228,0.65);font-weight:500">superuser@example.com</span></p>
+      <p style="font-size:12.5px;color:rgba(240,236,228,0.4);margin:3px 0">Senha: <span style="color:rgba(240,236,228,0.65);font-weight:500">superpass123</span></p>
+      <p style="font-size:11px;color:rgba(240,236,228,0.2);margin-top:6px">Este SuperUser já é criado no init.sql.</p>
     </div>
-</div>
+
+  </div>
 </main>
 <?php include 'partials/footer.php';
