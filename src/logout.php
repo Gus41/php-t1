@@ -1,5 +1,5 @@
 <?php
-require_once 'services/sessions.php';
+require_once 'services/SessionsService.php';
 $session = new SessionManager();
 $session->logoutUser();
 header('Location: login.php');
