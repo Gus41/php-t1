@@ -43,6 +43,7 @@ $user = $session->currentUser();
       <?php
       $links = [['index.php','Home'],['address.php','Meu Endereço']];
       if ($session->hasRole(['superuser', 'admin'])):
+        $links[] = ['products.php','Produtos'];
         $links[] = ['suppliers.php','Fornecedores'];
       endif;
       if ($session->hasRole(['superuser'])):
