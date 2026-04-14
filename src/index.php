@@ -1,44 +1,103 @@
 <?php
 require_once 'services/SessionsService.php';
+require_once 'services/ProductService.php';
 $session = new SessionManager();
 $user = $session->currentUser();
+if($user) {
+    $productService = new ProductService(new ProductDAO(), new SupplierDAO());
+    $products = $productService->getAll();
+}
 include 'partials/header.php';
-/*
-    ...
-*/
 ?>
 <main class="flex-grow flex items-center justify-center px-6 py-12">
     <div class="w-full max-w-5xl">
-        <div class="rounded-[32px] border border-white/10 bg-black/95 p-8 shadow-[0_30px_90px_-30px_rgba(255,255,255,0.05)]">
+        <div class="rounded-[32px] border border-white/10  p-8  ">
             <?php if ($user): ?>
-                <div class="mb-8 flex flex-wrap items-center justify-between gap-4">
-                    <div>
-                        <p class="text-xs uppercase tracking-[0.35em] text-slate-500">Painel</p>
-                        <p class="mt-2 text-3xl font-semibold text-white">Seu perfil</p>
+                <?php if ($products): ?>
+                    <div class="grid gap-4">
+                        <?php foreach ($products as $product): ?>
+                            <?php
+                                $stock  = (int) ($product['stock'] ?? 0);
+                                $status = $product['status'] ?? 'inativo';
+                                $createdAt = !empty($product['created_at'])
+                                    ? date('d/m/Y', strtotime($product['created_at']))
+                                    : null;
+                            ?>
+                            <div class="rounded-2xl border border-white/10 bg-white/5 p-5 hover:bg-white/10 transition-colors">
+
+                                <!-- Cabeçalho -->
+                                <div class="flex items-start justify-between gap-3 mb-3">
+                                    <div>
+                                        <p class="text-base font-medium text-white leading-snug">
+                                            <?= htmlspecialchars($product['name'] ?? '') ?>
+                                        </p>
+                                        <?php if (!empty($product['supplier_name'])): ?>
+                                            <p class="text-xs text-slate-400 mt-0.5">
+                                                Fornecedor:
+                                                <span class="text-slate-300 font-medium">
+                                                    <?= htmlspecialchars($product['supplier_name']) ?>
+                                                </span>
+                                            </p>
+                                        <?php endif ?>
+                                    </div>
+                                    <span class="shrink-0 text-xs font-medium px-2.5 py-1 rounded-full
+                                        <?= $status === 'ativo'
+                                            ? 'bg-emerald-500/15 text-emerald-400'
+                                            : 'bg-red-500/15 text-red-400' ?>">
+                                        <?= htmlspecialchars($status) ?>
+                                    </span>
+                                </div>
+
+                                <!-- Descrição -->
+                                <?php if (!empty($product['description'])): ?>
+                                    <p class="text-sm text-slate-400 mb-3 leading-relaxed line-clamp-2">
+                                        <?= htmlspecialchars($product['description']) ?>
+                                    </p>
+                                <?php endif ?>
+
+                                <!-- Tags -->
+                                <div class="flex flex-wrap gap-2 mb-4">
+                                    <?php if (!empty($product['sku'])): ?>
+                                        <span class="text-xs bg-white/5 border border-white/10 rounded-lg px-2.5 py-1 text-slate-400">
+                                            SKU <span class="text-slate-200 font-medium"><?= htmlspecialchars($product['sku']) ?></span>
+                                        </span>
+                                    <?php endif ?>
+                                    <?php if (!empty($product['category'])): ?>
+                                        <span class="text-xs bg-white/5 border border-white/10 rounded-lg px-2.5 py-1 text-slate-400">
+                                            <?= htmlspecialchars($product['category']) ?>
+                                        </span>
+                                    <?php endif ?>
+                                    <?php if ($createdAt): ?>
+                                        <span class="text-xs bg-white/5 border border-white/10 rounded-lg px-2.5 py-1 text-slate-400">
+                                            <?= $createdAt ?>
+                                        </span>
+                                    <?php endif ?>
+                                </div>
+
+                                <!-- Rodapé -->
+                                <div class="flex items-center justify-between pt-3 border-t border-white/10">
+                                    <p class="text-lg font-semibold text-white">
+                                        R$ <?= number_format((float)($product['price'] ?? 0), 2, ',', '.') ?>
+                                    </p>
+                                    <span class="text-xs font-medium
+                                        <?php if ($stock === 0): ?>
+                                            text-red-400
+                                        <?php elseif ($stock <= 5): ?>
+                                            text-amber-400
+                                        <?php else: ?>
+                                            text-emerald-400
+                                        <?php endif ?>">
+                                        <?= $stock === 0 ? 'Sem estoque' : $stock . ' em estoque' ?>
+                                    </span>
+                                </div>
+
+                            </div>
+                        <?php endforeach ?>
                     </div>
-                </div>
-                <div class="grid gap-6">
-                    <div class="rounded-[24px] border border-white/10 bg-white/5 p-6 text-slate-100">
-                        <p class="text-sm text-slate-400 mb-4">Informações básicas</p>
-                        <div class="space-y-3 text-sm text-white">
-                            <p><span class="text-slate-500">Nome:</span> <?= htmlspecialchars($user['name']) ?></p>
-                            <p><span class="text-slate-500">E-mail:</span> <?= htmlspecialchars($user['email']) ?></p>
-                            <p><span class="text-slate-500">Telefone:</span> <?= htmlspecialchars($user['phone']) ?></p>
-                            <p><span class="text-slate-500">Endereço:</span> <?= nl2br(htmlspecialchars($user['address'])) ?></p>
-                            <p><span class="text-slate-500">Tipo:</span> <?= htmlspecialchars(ucfirst($user['role'])) ?></p>
-                        </div>
-                    </div>
-                    <div class="rounded-[24px] border border-white/10 bg-white/5 p-6 text-slate-100">
-                        <p class="text-sm text-slate-400 mb-4">Status da conta</p>
-                        <?php if ($user['role'] === 'superuser'): ?>
-                            <p class="text-white">Permissões completas. Você pode cadastrar admins.</p>
-                        <?php elseif ($user['role'] === 'admin'): ?>
-                            <p class="text-white">Perfil administrativo com acesso estendido.</p>
-                        <?php else: ?>
-                            <p class="text-white">Perfil padrão de cliente.</p>
-                        <?php endif ?>
-                    </div>
-                </div>
+                <?php else: ?>
+                    <p class="text-slate-400 text-sm">Nenhum produto cadastrado.</p>
+                <?php endif ?>
+                
             <?php else: ?>
                 <div class="rounded-[24px] border border-white/10 bg-white/5 p-8 text-center">
                     <p class="text-sm uppercase tracking-[0.35em] text-slate-500">Bem-vindo</p>

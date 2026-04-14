@@ -66,3 +66,59 @@ CREATE TABLE IF NOT EXISTS products (
         ON UPDATE CASCADE
         ON DELETE RESTRICT
 );
+
+-- Endereços dos fornecedores
+INSERT IGNORE INTO addresses (street, complement, city, state, neighborhood, zip_code) VALUES
+    ('Av. Paulista, 1000',   'Sala 52',  'São Paulo',       'SP', 'Bela Vista',    '01310-100'),
+    ('Rua das Flores, 200',  NULL,        'Curitiba',        'PR', 'Centro',        '80010-020'),
+    ('Rua XV de Novembro, 300', 'Loja 3', 'Porto Alegre',   'RS', 'Centro Histórico','90020-060'),
+    ('Av. Atlântica, 500',   NULL,        'Rio de Janeiro',  'RJ', 'Copacabana',    '22010-000');
+
+-- Fornecedores
+INSERT IGNORE INTO suppliers (name, phone, email, address_id) VALUES
+    ('Tech Imports Ltda',    '(11) 91234-5678', 'contato@techimports.com.br',   2),
+    ('Periféricos Brasil',   '(41) 93456-7890', 'vendas@perifericosbrasil.com', 3),
+    ('Móveis Confort',       '(51) 94567-8901', 'comercial@moveisconfort.com',  4),
+    ('Eletro Distribuidora', '(21) 95678-9012', 'pedidos@eletrodist.com.br',    5);
+
+-- Produtos
+INSERT IGNORE INTO products (supplier_id, name, description, category, price, stock, sku, status) VALUES
+    (1, 'Notebook Gamer RTX 4060',
+        'Notebook para jogos com placa de vídeo RTX 4060, processador Intel i7, 16GB RAM e SSD 512GB NVMe.',
+        'Informática', 4599.00, 23, 'NTB-RTX4060', 'ativo'),
+
+    (1, 'Monitor Ultrawide 34"',
+        'Monitor curvo ultrawide 34 polegadas, resolução WQHD 3440x1440, 144Hz e painel IPS.',
+        'Informática', 2199.90, 11, 'MON-UW34-144', 'ativo'),
+
+    (1, 'SSD NVMe 1TB',
+        'SSD M.2 NVMe com leitura de até 7.000 MB/s, compatível com PCIe 4.0.',
+        'Informática', 469.90, 54, 'SSD-NVME-1TB', 'ativo'),
+
+    (2, 'Mouse Sem Fio Ergonômico',
+        'Mouse ergonômico com conexão Bluetooth e receptor USB, DPI ajustável e até 90 dias de bateria.',
+        'Periféricos', 189.90, 4, 'MSE-ERGO-001', 'ativo'),
+
+    (2, 'Teclado Mecânico TKL',
+        'Teclado mecânico tenkeyless com switches Red, iluminação RGB por tecla e keycaps PBT.',
+        'Periféricos', 349.00, 18, 'TEC-MEC-TKL', 'ativo'),
+
+    (2, 'Headset 7.1 Surround',
+        'Headset gamer com áudio surround 7.1 virtual, microfone retrátil com cancelamento de ruído.',
+        'Periféricos', 279.00, 0, 'HDS-71-SRD', 'inativo'),
+
+    (3, 'Cadeira Gamer Pro Max',
+        'Cadeira gamer com apoio lombar ajustável, reclinável até 180° e revestimento em couro PU.',
+        'Mobiliário', 1250.00, 0, 'CDR-GMPRO', 'inativo'),
+
+    (3, 'Mesa Escritório L 160cm',
+        'Mesa em L para escritório com 160cm, tampo MDF 25mm e acabamento amadeirado.',
+        'Mobiliário', 890.00, 7, 'MSA-ESC-160L', 'ativo'),
+
+    (4, 'Nobreak 1400VA',
+        'Nobreak senoidal 1400VA com 8 tomadas, proteção contra surtos e autonomia de até 30 minutos.',
+        'Elétricos', 749.90, 15, 'NBK-1400VA', 'ativo'),
+
+    (4, 'Cabo HDMI 2.1 3m',
+        'Cabo HDMI 2.1 com suporte a 8K 60Hz e 4K 120Hz, 3 metros, com malha trançada.',
+        'Elétricos', 89.90, 102, 'CAB-HDMI21-3M', 'ativo');

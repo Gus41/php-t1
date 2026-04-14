@@ -82,6 +82,10 @@ class ProductService {
         ];
     }
 
+    public function getAll(): array {
+        return $this->dao->findAllWithSupplier();
+    }
+
     public function delete(int $id): void {
         $this->dao->delete($id);
     }
@@ -142,4 +146,6 @@ class ProductService {
 
         return true;
     }
+
+    
 }

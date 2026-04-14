@@ -146,7 +146,7 @@ include 'partials/header.php';
         </form>
       </section>
 
-      <section style="border:1px solid rgba(240,236,228,0.08);border-radius:18px;padding:28px;background:rgba(255,255,255,0.03)">
+      <section style="max-width: 660px; border:1px solid rgba(240,236,228,0.08);border-radius:18px;padding:28px;background:rgba(255,255,255,0.03)">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px">
           <div>
             <h2 style="font-family:'DM Serif Display',serif;font-size:28px;font-weight:400;margin:0">Produtos</h2>
