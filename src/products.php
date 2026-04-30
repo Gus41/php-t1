@@ -18,6 +18,7 @@ $productDAO = new ProductDAO();
 $supplierDAO = new SupplierDAO();
 $productService = new ProductService($productDAO, $supplierDAO);
 $message = '';
+$messageType = 'success';
 $formData = $productService->getFormData();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -31,17 +32,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $result = $productService->save($_POST);
     if ($result['success']) {
-        header('Location: products.php?message=' . urlencode($result['message']));
-        exit;
-    }
+        $isEditing = isset($_POST['product_id']) && $_POST['product_id'] !== '';
+        $message = $result['message'];
+        $messageType = 'success';
 
-    $message = $result['message'];
-    $formData = array_merge($formData, $_POST);
-    $formData['product_id'] = isset($_POST['product_id']) && $_POST['product_id'] !== '' ? (int)$_POST['product_id'] : null;
+        if ($isEditing) {
+            header('Location: products.php?message=' . urlencode($result['message']));
+            exit;
+        }
+
+        $formData = $productService->getFormData();
+    } else {
+        $message = $result['message'];
+        $messageType = 'error';
+        $formData = array_merge($formData, $_POST);
+        $formData['product_id'] = isset($_POST['product_id']) && $_POST['product_id'] !== '' ? (int)$_POST['product_id'] : null;
+    }
 }
 
 if (isset($_GET['message'])) {
     $message = trim($_GET['message']);
+    $messageType = 'success';
 }
 
 if (isset($_GET['edit_id'])) {
@@ -70,7 +81,7 @@ include 'partials/header.php';
         <p style="font-size:13px;font-weight:300;color:rgba(240,236,228,0.35);margin:0 0 2rem">Use o formulário para criar ou atualizar um produto.</p>
 
         <?php if ($message): ?>
-          <div style="background:rgba(31,198,156,0.12);border:1px solid rgba(31,198,156,0.22);border-radius:8px;padding:12px 14px;font-size:13px;color:#d5f7ef;margin-bottom:1.25rem">
+          <div style="background:<?= $messageType === 'error' ? 'rgba(226,75,74,0.08)' : 'rgba(31,198,156,0.12)' ?>;border:1px solid <?= $messageType === 'error' ? 'rgba(226,75,74,0.2)' : 'rgba(31,198,156,0.22)' ?>;border-radius:8px;padding:12px 14px;font-size:13px;color:<?= $messageType === 'error' ? '#f09595' : '#d5f7ef' ?>;margin-bottom:1.25rem">
             <?= htmlspecialchars($message) ?>
           </div>
         <?php endif ?>
