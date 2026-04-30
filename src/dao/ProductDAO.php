@@ -46,6 +46,19 @@ class ProductDAO {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function searchByNameOrSku(string $query): array {
+        $stmt = $this->db->prepare(
+            'SELECT p.*, s.name AS supplier_name
+             FROM products p
+             LEFT JOIN suppliers s ON s.id = p.supplier_id
+             WHERE p.name LIKE :query OR p.sku LIKE :query
+             ORDER BY p.id DESC'
+        );
+        $stmt->execute([':query' => '%' . $query . '%']);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public function findBySku(string $sku): ?Product {
         $stmt = $this->db->prepare(
             'SELECT p.*, s.name AS supplier_name

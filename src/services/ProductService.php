@@ -86,6 +86,10 @@ class ProductService {
         return $this->dao->findAllWithSupplier();
     }
 
+    public function search(string $query): array {
+        return $this->dao->searchByNameOrSku($query);
+    }
+
     public function delete(int $id): void {
         $this->dao->delete($id);
     }

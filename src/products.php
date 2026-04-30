@@ -68,6 +68,11 @@ if (isset($_GET['edit_id'])) {
 $products = $productDAO->findAllWithSupplier();
 $suppliers = $supplierDAO->findAllWithAddress();
 
+$searchQuery = trim($_GET['search'] ?? '');
+if (!empty($searchQuery)) {
+    $products = $productDAO->searchByNameOrSku($searchQuery);
+}
+
 include 'partials/header.php';
 ?>
 <main class="flex-grow flex justify-center px-6 py-12">
@@ -164,6 +169,14 @@ include 'partials/header.php';
             <p style="font-size:13px;font-weight:300;color:rgba(240,236,228,0.35);margin:8px 0 0">Lista de produtos cadastrados.</p>
           </div>
         </div>
+
+        <form method="get" style="margin-bottom:20px;display:flex;gap:10px">
+          <input type="text" name="search" value="<?= htmlspecialchars($searchQuery) ?>" placeholder="Buscar por nome ou código (SKU)" style="<?= $inputStyle ?>;flex:1">
+          <button type="submit" style="padding:11px 20px;background:#f0ece4;color:#0e0e0e;border:none;border-radius:8px;font-size:12px;font-weight:500;font-family:'DM Sans',sans-serif;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer">Buscar</button>
+          <?php if (!empty($searchQuery)): ?>
+            <a href="products.php" style="padding:11px 20px;background:rgba(240,236,228,0.1);color:#f0ece4;border:1px solid rgba(240,236,228,0.2);border-radius:8px;font-size:12px;font-weight:500;font-family:'DM Sans',sans-serif;letter-spacing:0.08em;text-transform:uppercase;text-decoration:none">Limpar</a>
+          <?php endif ?>
+        </form>
 
         <?php if (empty($products)): ?>
           <div style="border:1px solid rgba(240,236,228,0.08);border-radius:10px;padding:48px;text-align:center;font-size:13px;color:rgba(240,236,228,0.3);letter-spacing:0.04em">

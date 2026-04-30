@@ -3,9 +3,12 @@ require_once 'services/SessionsService.php';
 require_once 'services/ProductService.php';
 $session = new SessionManager();
 $user = $session->currentUser();
-if($user) {
+$searchQuery = trim($_GET['search'] ?? '');
+if ($user) {
     $productService = new ProductService(new ProductDAO(), new SupplierDAO());
-    $products = $productService->getAll();
+    $products = $searchQuery !== ''
+        ? $productService->search($searchQuery)
+        : $productService->getAll();
 }
 include 'partials/header.php';
 ?>
@@ -13,6 +16,26 @@ include 'partials/header.php';
     <div class="w-full max-w-5xl">
         <div class="rounded-[32px] border border-white/10  p-8  ">
             <?php if ($user): ?>
+                <form method="get" class="mb-6 flex flex-col gap-3 sm:flex-row">
+                    <input
+                        type="text"
+                        name="search"
+                        value="<?= htmlspecialchars($searchQuery) ?>"
+                        placeholder="Buscar produtos por nome ou SKU"
+                        class="rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-3 text-sm text-white outline-none focus:border-sky-500"
+                    />
+                    <div class="flex gap-2">
+                        <button type="submit" class="rounded-2xl bg-slate-200 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100">
+                            Buscar
+                        </button>
+                        <?php if ($searchQuery !== ''): ?>
+                            <a href="index.php" class="rounded-2xl border border-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:border-slate-200">
+                                Limpar
+                            </a>
+                        <?php endif ?>
+                    </div>
+                </form>
+
                 <?php if ($products): ?>
                     <div class="grid gap-4">
                         <?php foreach ($products as $product): ?>
