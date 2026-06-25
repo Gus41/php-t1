@@ -61,54 +61,38 @@ class ProductService {
             return ['success' => false, 'message' => 'Já existe um produto cadastrado com esse SKU.'];
         }
 
-        // ── Carregar dados existentes ────────────────────────────────────────────
-        $existing       = $productId !== null ? $this->dao->findById($productId) : null;
-        $existingImages = $productId !== null ? $this->dao->findImagesByProductId($productId) : [];
-        $imagePath      = $existing ? $existing->getImagePath() : null;
+        // ── Carregar imagem existente ────────────────────────────────────────────
+        $existing  = $productId !== null ? $this->dao->findById($productId) : null;
+        $imagePath = $existing ? $existing->getImagePath() : null;
 
-        // ── Processar múltiplos uploads ──────────────────────────────────────────
-        $allowed     = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-        $uploadDir   = __DIR__ . '/../uploads/products/';
-        $uploadedPaths = [];
+        // ── Processar upload da imagem ───────────────────────────────────────────
+        $allowed   = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        $uploadDir = __DIR__ . '/../uploads/products/';
+        $fileInfo  = $files['image'] ?? null;
 
-        $rawFiles = $files['images'] ?? null;
-        $hasUploads = $rawFiles && is_array($rawFiles['name'])
-            && count(array_filter($rawFiles['error'], fn($e) => $e !== UPLOAD_ERR_NO_FILE)) > 0;
-
-        if ($hasUploads) {
+        if ($fileInfo && isset($fileInfo['error']) && $fileInfo['error'] === UPLOAD_ERR_OK) {
             if (!is_dir($uploadDir)) {
                 mkdir($uploadDir, 0775, true);
             }
-            foreach ($rawFiles['name'] as $i => $originalName) {
-                $err = $rawFiles['error'][$i] ?? UPLOAD_ERR_NO_FILE;
-                if ($err === UPLOAD_ERR_NO_FILE) continue;
-                if ($err !== UPLOAD_ERR_OK) {
-                    return ['success' => false, 'message' => 'Erro ao enviar arquivo "' . htmlspecialchars($originalName) . '".'];
-                }
-                $finfo = finfo_open(FILEINFO_MIME_TYPE);
-                $mime  = finfo_file($finfo, $rawFiles['tmp_name'][$i]);
-                finfo_close($finfo);
-                if (!in_array($mime, $allowed, true)) {
-                    return ['success' => false, 'message' => 'Formato inválido em "' . htmlspecialchars($originalName) . '". Use JPG, PNG, GIF ou WebP.'];
-                }
-                $ext = explode('/', $mime)[1];
-                if ($ext === 'jpeg') $ext = 'jpg';
-                $filename = uniqid('prod_', true) . '.' . $ext;
-                if (!move_uploaded_file($rawFiles['tmp_name'][$i], $uploadDir . $filename)) {
-                    return ['success' => false, 'message' => 'Não foi possível salvar "' . htmlspecialchars($originalName) . '".'];
-                }
-                $uploadedPaths[] = 'uploads/products/' . $filename;
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mime  = finfo_file($finfo, $fileInfo['tmp_name']);
+            finfo_close($finfo);
+            if (!in_array($mime, $allowed, true)) {
+                return ['success' => false, 'message' => 'Formato inválido. Use JPG, PNG, GIF ou WebP.'];
             }
-            // Remove imagens antigas ao substituir
-            foreach ($existingImages as $oldPath) {
-                $file = __DIR__ . '/../' . $oldPath;
-                if (file_exists($file)) @unlink($file);
+            $ext = explode('/', $mime)[1];
+            if ($ext === 'jpeg') $ext = 'jpg';
+            $filename = uniqid('prod_', true) . '.' . $ext;
+            if (!move_uploaded_file($fileInfo['tmp_name'], $uploadDir . $filename)) {
+                return ['success' => false, 'message' => 'Não foi possível salvar a imagem.'];
             }
-            $imagePath = $uploadedPaths[0] ?? $imagePath;
+            // Remove imagem antiga ao substituir
+            if ($imagePath) {
+                $old = __DIR__ . '/../' . $imagePath;
+                if (file_exists($old)) @unlink($old);
+            }
+            $imagePath = 'uploads/products/' . $filename;
         }
-
-        // Imagens finais da galeria
-        $finalImages = !empty($uploadedPaths) ? $uploadedPaths : $existingImages;
 
         $product = new Product(
             $productId,
@@ -127,11 +111,6 @@ class ProductService {
 
         $savedId = $this->dao->save($product);
 
-        // Salva galeria se houve uploads novos
-        if (!empty($uploadedPaths)) {
-            $this->dao->saveImages($savedId, $uploadedPaths);
-        }
-
         return [
             'success' => true,
             'message' => $productId ? 'Produto atualizado com sucesso.' : 'Produto cadastrado com sucesso.',
@@ -147,13 +126,8 @@ class ProductService {
     }
 
     public function delete(int $id): void {
-        $images  = $this->dao->findImagesByProductId($id);
         $product = $this->dao->findById($id);
         $this->dao->delete($id);
-        foreach ($images as $path) {
-            $file = __DIR__ . '/../' . $path;
-            if (file_exists($file)) @unlink($file);
-        }
         if ($product && $product->getImagePath()) {
             $file = __DIR__ . '/../' . $product->getImagePath();
             if (file_exists($file)) @unlink($file);
@@ -172,7 +146,6 @@ class ProductService {
             'sku'         => '',
             'status'      => 'ativo',
             'image_path'  => null,
-            'images'      => [],
         ];
 
         if ($productId === null) return $empty;
@@ -191,7 +164,6 @@ class ProductService {
             'sku'         => $product->getSku(),
             'status'      => $product->getStatus(),
             'image_path'  => $product->getImagePath(),
-            'images'      => $this->dao->findImagesByProductId($product->getId()),
         ];
     }
 
