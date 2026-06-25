@@ -1,4 +1,7 @@
-CREATE DATABASE IF NOT EXISTS testdb;
+SET NAMES 'utf8mb4';
+SET CHARACTER SET utf8mb4;
+
+CREATE DATABASE IF NOT EXISTS testdb CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE testdb;
 
 CREATE TABLE IF NOT EXISTS addresses (
@@ -61,10 +64,43 @@ CREATE TABLE IF NOT EXISTS products (
     stock INT NOT NULL DEFAULT 0,
     sku VARCHAR(100) NOT NULL UNIQUE,
     status ENUM('ativo', 'inativo') NOT NULL DEFAULT 'ativo',
+    image_path VARCHAR(255) DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (supplier_id) REFERENCES suppliers(id)
         ON UPDATE CASCADE
         ON DELETE RESTRICT
+);
+
+CREATE TABLE IF NOT EXISTS orders (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    status ENUM('pendente','enviado','cancelado') NOT NULL DEFAULT 'pendente',
+    total DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    payment_method VARCHAR(50) DEFAULT NULL,
+    shipping_method VARCHAR(100) DEFAULT NULL,
+    shipping_cost DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    sent_at DATETIME DEFAULT NULL,
+    cancelled_at DATETIME DEFAULT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS order_items (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id INT NOT NULL,
+    product_id INT NOT NULL,
+    quantity INT NOT NULL,
+    unit_price DECIMAL(10,2) NOT NULL,
+    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products(id)
+);
+
+CREATE TABLE IF NOT EXISTS product_images (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    product_id INT NOT NULL,
+    image_path VARCHAR(255) NOT NULL,
+    sort_order TINYINT NOT NULL DEFAULT 0,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
 );
 
 -- Endereços dos fornecedores

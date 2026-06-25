@@ -24,7 +24,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $storedPassword = $user->getPassword();
                 if ($storedPassword === $password || password_verify($password, $storedPassword)) {
                     $session->loginUser($user->toArray());
-                    header('Location: index.php');
+                    $redirect = $_SESSION['redirect_after_auth'] ?? 'index.php';
+                    unset($_SESSION['redirect_after_auth']);
+                    header('Location: ' . $redirect);
                     exit;
                 }
                 $message = 'E-mail ou senha incorretos.';

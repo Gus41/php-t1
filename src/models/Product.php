@@ -12,8 +12,9 @@ class Product {
     private string $status;
     private ?string $supplierName;
     private ?string $createdAt;
+    private ?string $imagePath;
 
-    public function __construct(?int $id, ?int $supplierId, string $name, string $description, ?string $category, float $price, int $stock, string $sku, string $status = 'ativo', ?string $supplierName = null, ?string $createdAt = null) {
+    public function __construct(?int $id, ?int $supplierId, string $name, string $description, ?string $category, float $price, int $stock, string $sku, string $status = 'ativo', ?string $supplierName = null, ?string $createdAt = null, ?string $imagePath = null) {
         $this->id = $id;
         $this->supplierId = $supplierId;
         $this->name = $name;
@@ -25,6 +26,7 @@ class Product {
         $this->status = $status;
         $this->supplierName = $supplierName;
         $this->createdAt = $createdAt;
+        $this->imagePath = $imagePath;
     }
 
     public static function fromArray(array $data): Product {
@@ -39,7 +41,8 @@ class Product {
             $data['sku'] ?? '',
             $data['status'] ?? 'ativo',
             $data['supplier_name'] ?? null,
-            $data['created_at'] ?? null
+            $data['created_at'] ?? null,
+            $data['image_path'] ?? null,
         );
     }
 
@@ -56,6 +59,7 @@ class Product {
             'status' => $this->status,
             'supplier_name' => $this->supplierName,
             'created_at' => $this->createdAt,
+            'image_path' => $this->imagePath,
         ];
     }
 
@@ -113,5 +117,13 @@ class Product {
 
     public function getCreatedAt(): ?string {
         return $this->createdAt;
+    }
+
+    public function getImagePath(): ?string {
+        return $this->imagePath;
+    }
+
+    public function setImagePath(?string $imagePath): void {
+        $this->imagePath = $imagePath;
     }
 }

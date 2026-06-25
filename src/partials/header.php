@@ -13,6 +13,7 @@ $user = $session->currentUser();
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     :root {
       --cream: #f0ece4;
@@ -21,6 +22,22 @@ $user = $session->currentUser();
       --muted: rgba(240,236,228,0.38);
     }
     body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--cream); }
+
+    /* ── Responsive grid helpers ─────────────────────────── */
+    .rg-cart     { display:grid; grid-template-columns:1fr 340px; gap:28px; align-items:start }
+    .rg-checkout { display:grid; grid-template-columns:1fr 380px; gap:28px; align-items:start }
+    .rg-form     { display:grid; grid-template-columns:1fr 1.3fr; gap:30px }
+    .rg-detail   { display:grid; grid-template-columns:1fr 1fr;   gap:40px; align-items:start }
+
+    @media (max-width:820px) {
+      .rg-cart, .rg-checkout, .rg-form, .rg-detail { grid-template-columns:1fr !important }
+      .rg-checkout > aside { order:-1 }
+    }
+    @media (max-width:600px) {
+      header { padding-left:16px !important; padding-right:16px !important }
+      main, section { padding-left:16px !important; padding-right:16px !important }
+      .hide-mobile { display:none !important }
+    }
   </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -41,14 +58,22 @@ $user = $session->currentUser();
         <?= htmlspecialchars($user['name']) ?>
       </span>
       <?php
+      $cartCount = array_sum(array_column($_SESSION['cart'] ?? [], 'quantity'));
       $links = [['index.php','Home'],['address.php','Meu Endereço']];
+      if ($session->hasRole(['cliente', 'admin', 'superuser'])):
+        $links[] = ['cart.php', $cartCount > 0 ? "Carrinho ({$cartCount})" : 'Carrinho'];
+      endif;
+      if ($session->hasRole(['cliente'])):
+        $links[] = ['orders.php','Meus Pedidos'];
+      endif;
       if ($session->hasRole(['superuser', 'admin'])):
         $links[] = ['products.php','Produtos'];
         $links[] = ['suppliers.php','Fornecedores'];
+        $links[] = ['orders.php','Pedidos'];
       endif;
       if ($session->hasRole(['superuser'])):
-        $links[] = ['create_admin.php','Cadastrar Admin'];
-        $links[] = ['addresses.php','Todos Endereços'];
+        $links[] = ['create_admin.php','Usuários'];
+        $links[] = ['addresses.php','Endereços'];
       endif;
       $links[] = ['logout.php','Sair'];
       foreach ($links as [$href, $label]):

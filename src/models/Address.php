@@ -85,6 +85,6 @@ class Address {
             $this->zipCode,
         ];
 
-        return implode(', ', array_filter(array_map('trim', $parts)));
+        return implode(', ', array_filter(array_map(fn($p) => trim($p ?? ''), $parts)));
     }
 }

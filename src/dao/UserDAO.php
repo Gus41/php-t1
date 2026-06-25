@@ -69,6 +69,53 @@ class UserDAO {
         }
     }
 
+    public function findAllPaginated(int $page, int $perPage): array {
+        $offset = ($page - 1) * $perPage;
+        $stmt = $this->db->prepare(
+            'SELECT u.id, u.name, u.email, u.phone, u.role, u.created_at
+             FROM users u
+             ORDER BY u.id DESC
+             LIMIT :limit OFFSET :offset'
+        );
+        $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function countAll(): int {
+        return (int)$this->db->query('SELECT COUNT(*) FROM users')->fetchColumn();
+    }
+
+    public function searchByNameOrId(string $query, int $page, int $perPage): array {
+        $offset = ($page - 1) * $perPage;
+        $isId   = is_numeric($query) && (int)$query > 0;
+        $stmt   = $this->db->prepare(
+            'SELECT u.id, u.name, u.email, u.phone, u.role, u.created_at
+             FROM users u
+             WHERE u.name LIKE :name' . ($isId ? ' OR u.id = :id' : '') . '
+             ORDER BY u.id DESC LIMIT :limit OFFSET :offset'
+        );
+        $stmt->bindValue(':name', '%' . $query . '%');
+        if ($isId) $stmt->bindValue(':id', (int)$query, PDO::PARAM_INT);
+        $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function countSearch(string $query): int {
+        $isId = is_numeric($query) && (int)$query > 0;
+        $stmt = $this->db->prepare(
+            'SELECT COUNT(*) FROM users
+             WHERE name LIKE :name' . ($isId ? ' OR id = :id' : '')
+        );
+        $stmt->bindValue(':name', '%' . $query . '%');
+        if ($isId) $stmt->bindValue(':id', (int)$query, PDO::PARAM_INT);
+        $stmt->execute();
+        return (int)$stmt->fetchColumn();
+    }
+
     public function updateAddressId(int $userId, ?int $addressId): void {
         $stmt = $this->db->prepare('UPDATE users SET address_id = :address_id WHERE id = :id');
         $stmt->execute([
