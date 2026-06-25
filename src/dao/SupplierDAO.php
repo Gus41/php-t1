@@ -17,8 +17,56 @@ class SupplierDAO {
              LEFT JOIN addresses a ON a.id = s.address_id
              ORDER BY s.id DESC'
         );
-
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function findAllWithAddressPaginated(int $page, int $perPage): array {
+        $offset = ($page - 1) * $perPage;
+        $stmt = $this->db->prepare(
+            'SELECT s.*, a.street, a.complement, a.city, a.state, a.neighborhood, a.zip_code
+             FROM suppliers s
+             LEFT JOIN addresses a ON a.id = s.address_id
+             ORDER BY s.id DESC
+             LIMIT :limit OFFSET :offset'
+        );
+        $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function countAll(): int {
+        return (int)$this->db->query('SELECT COUNT(*) FROM suppliers')->fetchColumn();
+    }
+
+    public function searchByNameOrId(string $query, int $page, int $perPage): array {
+        $offset = ($page - 1) * $perPage;
+        $isId   = is_numeric($query) && (int)$query > 0;
+        $stmt   = $this->db->prepare(
+            'SELECT s.*, a.street, a.complement, a.city, a.state, a.neighborhood, a.zip_code
+             FROM suppliers s
+             LEFT JOIN addresses a ON a.id = s.address_id
+             WHERE s.name LIKE :name' . ($isId ? ' OR s.id = :id' : '') . '
+             ORDER BY s.id DESC LIMIT :limit OFFSET :offset'
+        );
+        $stmt->bindValue(':name', '%' . $query . '%');
+        if ($isId) $stmt->bindValue(':id', (int)$query, PDO::PARAM_INT);
+        $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function countSearch(string $query): int {
+        $isId = is_numeric($query) && (int)$query > 0;
+        $stmt = $this->db->prepare(
+            'SELECT COUNT(*) FROM suppliers
+             WHERE name LIKE :name' . ($isId ? ' OR id = :id' : '')
+        );
+        $stmt->bindValue(':name', '%' . $query . '%');
+        if ($isId) $stmt->bindValue(':id', (int)$query, PDO::PARAM_INT);
+        $stmt->execute();
+        return (int)$stmt->fetchColumn();
     }
 
     public function findById(int $id): ?Supplier {

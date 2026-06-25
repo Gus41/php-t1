@@ -29,6 +29,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         $result = $userService->register($_POST, $requestedRole);
         $message = $result['message'];
+        if ($result['success']) {
+            $redirect = $_SESSION['redirect_after_auth'] ?? 'login.php';
+            unset($_SESSION['redirect_after_auth']);
+            header('Location: ' . $redirect . '?registered=1');
+            exit;
+        }
     }
 }
 

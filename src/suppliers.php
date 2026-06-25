@@ -139,13 +139,24 @@ if (isset($_GET['edit_id'])) {
     }
 }
 
-$suppliers = $supplierDAO->findAllWithAddress();
+$perPage     = 10;
+$page        = max(1, (int)($_GET['page'] ?? 1));
+$searchQuery = trim($_GET['search'] ?? '');
+
+if (!empty($searchQuery)) {
+    $suppliers  = $supplierDAO->searchByNameOrId($searchQuery, $page, $perPage);
+    $totalItems = $supplierDAO->countSearch($searchQuery);
+} else {
+    $suppliers  = $supplierDAO->findAllWithAddressPaginated($page, $perPage);
+    $totalItems = $supplierDAO->countAll();
+}
+$totalPages = (int)ceil($totalItems / $perPage);
 
 include 'partials/header.php';
 ?>
 <main class="flex-grow flex justify-center px-6 py-12">
   <div style="width:100%;max-width:1100px">
-    <div style="display:grid;grid-template-columns:1fr 1.3fr;gap:30px">
+    <div class="rg-form">
 
       <section style="border:1px solid rgba(240,236,228,0.08);border-radius:18px;padding:28px;background:rgba(255,255,255,0.03)">
         <h1 style="font-family:'DM Serif Display',serif;font-size:30px;font-weight:400;letter-spacing:-0.01em;margin:0 0 8px"><?= $formData['supplier_id'] ? 'Editar Fornecedor' : 'Cadastrar Fornecedor' ?>.</h1>
@@ -236,6 +247,20 @@ include 'partials/header.php';
           <a href="suppliers.php" style="font-size:12px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:#f0ece4;text-decoration:none;border:1px solid rgba(240,236,228,0.12);padding:9px 14px;border-radius:10px;">Novo fornecedor</a>
         </div>
 
+        <form method="get" action="suppliers.php" style="display:flex;gap:8px;margin-bottom:16px">
+          <input type="text" name="search" value="<?= htmlspecialchars($searchQuery) ?>"
+            placeholder="Buscar por código ou nome..."
+            style="flex:1;padding:9px 14px;border-radius:8px;border:1px solid rgba(240,236,228,0.14);background:rgba(255,255,255,0.04);color:#f0ece4;font-size:13px;font-family:'DM Sans',sans-serif;outline:none">
+          <button type="submit" style="padding:9px 16px;background:#f0ece4;color:#0e0e0e;border:none;border-radius:8px;font-size:12px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer">Buscar</button>
+          <?php if (!empty($searchQuery)): ?>
+            <a href="suppliers.php" style="padding:9px 14px;border:1px solid rgba(240,236,228,0.12);border-radius:8px;font-size:12px;color:#f0ece4;text-decoration:none;display:flex;align-items:center">✕</a>
+          <?php endif ?>
+        </form>
+
+        <p style="font-size:13px;font-weight:300;color:rgba(240,236,228,0.35);margin:0 0 18px">
+          <?= $totalItems ?> fornecedor<?= $totalItems !== 1 ? 'es' : '' ?><?= !empty($searchQuery) ? ' encontrado' . ($totalItems !== 1 ? 's' : '') . ' para "' . htmlspecialchars($searchQuery) . '"' : ' cadastrado' . ($totalItems !== 1 ? 's' : '') ?>.
+        </p>
+
         <?php if (empty($suppliers)): ?>
           <div style="border:1px solid rgba(240,236,228,0.08);border-radius:10px;padding:48px;text-align:center;font-size:13px;color:rgba(240,236,228,0.3);letter-spacing:0.04em">
             Nenhum fornecedor encontrado.
@@ -285,9 +310,19 @@ include 'partials/header.php';
               </tbody>
             </table>
           </div>
+          <?php if ($totalPages > 1): ?>
+            <div style="display:flex;gap:6px;justify-content:center;margin-top:18px;flex-wrap:wrap">
+              <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+                <a href="suppliers.php?page=<?= $i ?><?= !empty($searchQuery) ? '&search=' . urlencode($searchQuery) : '' ?>"
+                   style="padding:7px 12px;border-radius:6px;font-size:12px;text-decoration:none;<?= $i === $page ? 'background:#f0ece4;color:#0e0e0e;font-weight:600' : 'border:1px solid rgba(240,236,228,0.1);color:rgba(240,236,228,0.5)' ?>">
+                  <?= $i ?>
+                </a>
+              <?php endfor ?>
+            </div>
+          <?php endif ?>
         <?php endif ?>
       </section>
     </div>
   </div>
 </main>
-<?php include 'partials/footer.php';
+<?php include 'partials/footer.php'; ?>

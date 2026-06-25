@@ -11,7 +11,7 @@ class Connection {
         $pass = 'root';
 
         try {
-            $this->conn = new PDO("mysql:host=$host;dbname=$db", $user, $pass);
+            $this->conn = new PDO("mysql:host=$host;dbname=$db;charset=utf8mb4", $user, $pass);
             $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         } catch (PDOException $e) {
             die("Erro de conexão: " . $e->getMessage());

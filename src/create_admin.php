@@ -12,11 +12,22 @@ if (!$userData || !$session->hasRole(['superuser'])) {
     exit;
 }
 
-$creator = User::fromArray($userData);
-$userDAO = new UserDAO();
+$creator    = User::fromArray($userData);
+$userDAO    = new UserDAO();
 $addressDAO = new AddressDAO();
 $userService = new UserService($userDAO, $addressDAO);
-$message = '';
+$message    = '';
+
+$perPage     = 10;
+$page        = max(1, (int)($_GET['page'] ?? 1));
+$searchQuery = trim($_GET['search'] ?? '');
+
+if (!empty($searchQuery)) {
+    $totalUsers = $userDAO->countSearch($searchQuery);
+} else {
+    $totalUsers = $userDAO->countAll();
+}
+$totalPages = (int)ceil($totalUsers / $perPage);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $result = $userService->createAdmin($creator, $_POST);
@@ -112,5 +123,77 @@ include 'partials/header.php';
     </form>
   </div>
 </main>
+
+<?php
+$users = !empty($searchQuery)
+    ? $userDAO->searchByNameOrId($searchQuery, $page, $perPage)
+    : $userDAO->findAllPaginated($page, $perPage);
+$roleBadge = ['cliente' => ['rgba(240,236,228,0.07)', 'rgba(240,236,228,0.5)', 'Cliente'], 'admin' => ['rgba(96,165,250,0.12)', '#93c5fd', 'Admin'], 'superuser' => ['rgba(167,139,250,0.12)', '#c4b5fd', 'Superuser']];
+?>
+<section class="flex justify-center px-6 pb-12">
+  <div style="width:100%;max-width:860px">
+    <div style="border:1px solid rgba(240,236,228,0.08);border-radius:18px;padding:28px;background:rgba(255,255,255,0.03)">
+      <h2 style="font-family:'DM Serif Display',serif;font-size:24px;font-weight:400;margin:0 0 4px">Usuários.</h2>
+
+      <form method="get" action="create_admin.php" style="display:flex;gap:8px;margin-bottom:14px">
+        <input type="text" name="search" value="<?= htmlspecialchars($searchQuery) ?>"
+          placeholder="Buscar por código ou nome..."
+          style="flex:1;padding:9px 14px;border-radius:8px;border:1px solid rgba(240,236,228,0.14);background:rgba(255,255,255,0.04);color:#f0ece4;font-size:13px;font-family:'DM Sans',sans-serif;outline:none">
+        <button type="submit" style="padding:9px 16px;background:#f0ece4;color:#0e0e0e;border:none;border-radius:8px;font-size:12px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer">Buscar</button>
+        <?php if (!empty($searchQuery)): ?>
+          <a href="create_admin.php" style="padding:9px 14px;border:1px solid rgba(240,236,228,0.12);border-radius:8px;font-size:12px;color:#f0ece4;text-decoration:none;display:flex;align-items:center">✕</a>
+        <?php endif ?>
+      </form>
+
+      <p style="font-size:13px;color:rgba(240,236,228,0.35);margin:0 0 20px">
+        <?= $totalUsers ?> usuário<?= $totalUsers !== 1 ? 's' : '' ?><?= !empty($searchQuery) ? ' encontrado' . ($totalUsers !== 1 ? 's' : '') . ' para "' . htmlspecialchars($searchQuery) . '"' : ' cadastrado' . ($totalUsers !== 1 ? 's' : '') ?>.
+      </p>
+
+      <div style="overflow-x:auto;border:1px solid rgba(240,236,228,0.08);border-radius:10px">
+        <table style="width:100%;border-collapse:collapse;font-size:13px;color:#f0ece4">
+          <thead>
+            <tr style="border-bottom:1px solid rgba(240,236,228,0.08)">
+              <?php foreach (['#','Nome','E-mail','Telefone','Papel','Criado em'] as $col): ?>
+                <th style="padding:12px 16px;text-align:left;font-size:10px;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;color:rgba(240,236,228,0.28);white-space:nowrap"><?= $col ?></th>
+              <?php endforeach ?>
+            </tr>
+          </thead>
+          <tbody>
+            <?php foreach ($users as $i => $u):
+              $rowBg = $i % 2 === 0 ? 'transparent' : 'rgba(240,236,228,0.02)';
+              $badge = $roleBadge[$u['role']] ?? $roleBadge['cliente'];
+              $createdAt = !empty($u['created_at']) ? date('d/m/Y', strtotime($u['created_at'])) : '—';
+            ?>
+              <tr style="border-bottom:1px solid rgba(240,236,228,0.05);background:<?= $rowBg ?>"
+                  onmouseover="this.style.background='rgba(240,236,228,0.05)'"
+                  onmouseout="this.style.background='<?= $rowBg ?>'">
+                <td style="padding:12px 16px;color:rgba(240,236,228,0.3);font-size:12px">#<?= $u['id'] ?></td>
+                <td style="padding:12px 16px;font-weight:500"><?= htmlspecialchars($u['name']) ?></td>
+                <td style="padding:12px 16px;color:rgba(240,236,228,0.55)"><?= htmlspecialchars($u['email']) ?></td>
+                <td style="padding:12px 16px;color:rgba(240,236,228,0.55);white-space:nowrap"><?= htmlspecialchars($u['phone']) ?></td>
+                <td style="padding:12px 16px">
+                  <span style="background:<?= $badge[0] ?>;color:<?= $badge[1] ?>;border:1px solid <?= $badge[1] ?>;border-radius:6px;padding:3px 10px;font-size:11px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase">
+                    <?= $badge[2] ?>
+                  </span>
+                </td>
+                <td style="padding:12px 16px;color:rgba(240,236,228,0.4);white-space:nowrap"><?= $createdAt ?></td>
+              </tr>
+            <?php endforeach ?>
+          </tbody>
+        </table>
+      </div>
+
+      <?php if ($totalPages > 1): ?>
+        <div style="display:flex;gap:6px;justify-content:center;margin-top:18px;flex-wrap:wrap">
+          <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+            <a href="create_admin.php?page=<?= $i ?><?= !empty($searchQuery) ? '&search=' . urlencode($searchQuery) : '' ?>"
+               style="padding:7px 12px;border-radius:6px;font-size:12px;text-decoration:none;<?= $i === $page ? 'background:#f0ece4;color:#0e0e0e;font-weight:600' : 'border:1px solid rgba(240,236,228,0.1);color:rgba(240,236,228,0.5)' ?>">
+              <?= $i ?>
+            </a>
+          <?php endfor ?>
+        </div>
+      <?php endif ?>
+    </div>
+  </div>
+</section>
 <?php include 'partials/footer.php'; ?>
-<?php include 'partials/footer.php';
