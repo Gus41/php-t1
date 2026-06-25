@@ -22,6 +22,7 @@ $user = $session->currentUser();
       --muted: rgba(240,236,228,0.38);
     }
     body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--cream); }
+    select option { background: #1a1a1a; color: #f0ece4; }
 
     /* ── Responsive grid helpers ─────────────────────────── */
     .rg-cart     { display:grid; grid-template-columns:1fr 340px; gap:28px; align-items:start }

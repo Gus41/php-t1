@@ -167,28 +167,18 @@ $sectionStyle = "font-size:10px;font-weight:500;letter-spacing:0.14em;text-trans
                 ondrop="handleDrop(event)"
                 style="border:2px dashed rgba(240,236,228,0.12);border-radius:10px;padding:28px 20px;text-align:center;cursor:pointer;transition:border-color 0.2s;background:rgba(240,236,228,0.02)">
                 <div style="font-size:28px;margin-bottom:8px">🖼</div>
-                <p style="font-size:13px;color:rgba(240,236,228,0.5);margin:0 0 4px">Arraste imagens ou <span style="color:#f0ece4;font-weight:500">clique para selecionar</span></p>
-                <p style="font-size:11px;color:rgba(240,236,228,0.25);margin:0">JPG, PNG, GIF, WebP — múltiplos arquivos permitidos</p>
+                <p id="drop-label" style="font-size:13px;color:rgba(240,236,228,0.5);margin:0 0 4px">Arraste a imagem ou <span style="color:#f0ece4;font-weight:500">clique para selecionar</span></p>
+                <p style="font-size:11px;color:rgba(240,236,228,0.25);margin:0">JPG, PNG, GIF ou WebP</p>
               </div>
-              <input type="file" id="img-input" name="images[]" accept="image/jpeg,image/png,image/gif,image/webp"
-                multiple style="display:none" onchange="previewImages(this.files)">
+              <input type="file" id="img-input" name="image" accept="image/jpeg,image/png,image/gif,image/webp"
+                style="display:none" onchange="previewImage(this.files[0])">
 
-              <!-- Preview de novos uploads -->
-              <div id="img-previews" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px"></div>
+              <!-- Preview do novo upload -->
+              <div id="img-preview" style="margin-top:10px"></div>
 
-              <?php if (!empty($formData['images'])): ?>
-                <p style="font-size:11px;color:rgba(240,236,228,0.3);margin:12px 0 8px;letter-spacing:0.06em;text-transform:uppercase">
-                  Imagens salvas (<?= count($formData['images']) ?>) — novos uploads substituirão estas
-                </p>
-                <div style="display:flex;flex-wrap:wrap;gap:8px">
-                  <?php foreach ($formData['images'] as $img): ?>
-                    <img src="<?= htmlspecialchars($img) ?>" alt=""
-                      style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:1px solid rgba(240,236,228,0.12)">
-                  <?php endforeach ?>
-                </div>
-              <?php elseif (!empty($formData['image_path'])): ?>
-                <p style="font-size:11px;color:rgba(240,236,228,0.3);margin:12px 0 8px">Imagem atual:</p>
-                <img src="<?= htmlspecialchars($formData['image_path']) ?>" alt=""
+              <?php if (!empty($formData['image_path'])): ?>
+                <p style="font-size:11px;color:rgba(240,236,228,0.3);margin:12px 0 8px">Imagem atual (novo upload irá substituir):</p>
+                <img id="current-img" src="<?= htmlspecialchars($formData['image_path']) ?>" alt=""
                   style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:1px solid rgba(240,236,228,0.12)">
               <?php endif ?>
             </div>
@@ -294,31 +284,32 @@ $sectionStyle = "font-size:10px;font-weight:500;letter-spacing:0.14em;text-trans
   </div>
 </main>
 <script>
-function previewImages(files) {
-  var container = document.getElementById('img-previews');
-  container.innerHTML = '';
-  var label = document.getElementById('drop-zone').querySelector('p');
-  if (label) label.innerHTML = files.length + ' arquivo(s) selecionado(s) — <span style="color:#f0ece4;font-weight:500">alterar seleção</span>';
-  Array.from(files).forEach(function(file) {
-    var reader = new FileReader();
-    reader.onload = function(e) {
-      var wrap = document.createElement('div');
-      wrap.style.cssText = 'position:relative;width:72px;height:72px';
-      var img = document.createElement('img');
-      img.src = e.target.result;
-      img.style.cssText = 'width:72px;height:72px;object-fit:cover;border-radius:8px;border:1px solid rgba(240,236,228,0.15)';
-      wrap.appendChild(img);
-      container.appendChild(wrap);
-    };
-    reader.readAsDataURL(file);
-  });
+function previewImage(file) {
+  if (!file) return;
+  var container = document.getElementById('img-preview');
+  var label = document.getElementById('drop-label');
+  if (label) label.innerHTML = '<span style="color:#f0ece4;font-weight:500">' + file.name + '</span> selecionada — clique para alterar';
+  var cur = document.getElementById('current-img');
+  if (cur) cur.style.display = 'none';
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    container.innerHTML = '<img src="' + e.target.result + '" style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:1px solid rgba(240,236,228,0.3)">';
+  };
+  reader.readAsDataURL(file);
 }
 function handleDrop(e) {
   e.preventDefault();
   document.getElementById('drop-zone').style.borderColor = 'rgba(240,236,228,0.12)';
+  var dt = e.dataTransfer;
+  if (!dt.files.length) return;
+  // Atribui o arquivo ao input via DataTransfer
   var input = document.getElementById('img-input');
-  input.files = e.dataTransfer.files;
-  previewImages(e.dataTransfer.files);
+  try {
+    var dtz = new DataTransfer();
+    dtz.items.add(dt.files[0]);
+    input.files = dtz.files;
+  } catch(err) {}
+  previewImage(dt.files[0]);
 }
 </script>
 <?php include 'partials/footer.php'; ?>

@@ -18,10 +18,7 @@ if (!$product || ($product->getStatus() !== 'ativo' && !$session->hasRole(['admi
     exit;
 }
 
-$images = $productDAO->findImagesByProductId($productId);
-if (empty($images) && $product->getImagePath()) {
-    $images = [$product->getImagePath()];
-}
+$imagePath = $product->getImagePath();
 
 $stock     = $product->getStock();
 $inCart    = $_SESSION['cart'][$productId]['quantity'] ?? 0;
@@ -43,32 +40,17 @@ include 'partials/header.php';
 
   <div class="rg-detail">
 
-    <!-- ── GALERIA ──────────────────────────────────────────────────────── -->
+    <!-- ── IMAGEM DO PRODUTO ─────────────────────────────────────────────── -->
     <section>
-      <!-- Imagem principal -->
-      <div style="border:1px solid rgba(240,236,228,0.08);border-radius:18px;overflow:hidden;background:rgba(255,255,255,0.02);margin-bottom:12px">
-        <?php if (!empty($images)): ?>
-          <img id="main-img" src="<?= htmlspecialchars($images[0]) ?>"
+      <div style="border:1px solid rgba(240,236,228,0.08);border-radius:18px;overflow:hidden;background:rgba(255,255,255,0.02)">
+        <?php if ($imagePath): ?>
+          <img src="<?= htmlspecialchars($imagePath) ?>"
             alt="<?= htmlspecialchars($product->getName()) ?>"
-            style="width:100%;height:440px;object-fit:cover;display:block;transition:opacity .2s">
+            style="width:100%;height:440px;object-fit:cover;display:block">
         <?php else: ?>
           <div style="width:100%;height:440px;display:flex;align-items:center;justify-content:center;font-size:64px;opacity:0.2">📦</div>
         <?php endif ?>
       </div>
-
-      <!-- Thumbnails (só se tiver mais de 1 imagem) -->
-      <?php if (count($images) > 1): ?>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <?php foreach ($images as $i => $img): ?>
-            <button onclick="swapImage(this, '<?= htmlspecialchars($img) ?>')"
-              id="thumb-<?= $i ?>"
-              style="padding:0;border:2px solid <?= $i === 0 ? '#f0ece4' : 'rgba(240,236,228,0.1)' ?>;border-radius:8px;overflow:hidden;cursor:pointer;background:none;transition:border-color .15s">
-              <img src="<?= htmlspecialchars($img) ?>" alt=""
-                style="width:72px;height:72px;object-fit:cover;display:block">
-            </button>
-          <?php endforeach ?>
-        </div>
-      <?php endif ?>
     </section>
 
     <!-- ── INFO + COMPRA ────────────────────────────────────────────────── -->
@@ -217,18 +199,6 @@ function addToCart() {
   next();
 }
 
-function swapImage(btn, src) {
-  var main = document.getElementById('main-img');
-  main.style.opacity = '0';
-  setTimeout(function() {
-    main.src = src;
-    main.style.opacity = '1';
-  }, 150);
-  document.querySelectorAll('[id^="thumb-"]').forEach(function(b) {
-    b.style.borderColor = 'rgba(240,236,228,0.1)';
-  });
-  btn.style.borderColor = '#f0ece4';
-}
 </script>
 
 <?php include 'partials/footer.php'; ?>
