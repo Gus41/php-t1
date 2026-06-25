@@ -69,4 +69,67 @@ class UserService {
         $data['role'] = 'admin';
         return $this->register($data, 'admin');
     }
+
+    public function updateUser(User $actor, int $userId, array $data): array {
+        if (!$actor->isSuperUser()) {
+            return ['success' => false, 'message' => 'Acesso negado: somente SuperUser pode editar usuários.'];
+        }
+
+        $target = $this->dao->findById($userId);
+        if (!$target) {
+            return ['success' => false, 'message' => 'Usuário não encontrado.'];
+        }
+
+        $name         = trim($data['name'] ?? '');
+        $phone        = trim($data['phone'] ?? '');
+        $email        = trim($data['email'] ?? '');
+        $street       = trim($data['street'] ?? '');
+        $complement   = trim($data['complement'] ?? '');
+        $neighborhood = trim($data['neighborhood'] ?? '');
+        $city         = trim($data['city'] ?? '');
+        $state        = trim($data['state'] ?? '');
+        $zipCode      = trim($data['zip_code'] ?? '');
+        $password     = $data['password'] ?? '';
+
+        if ($name === '' || $phone === '' || $email === '' || $street === '' || $neighborhood === '' || $city === '' || $state === '' || $zipCode === '') {
+            return ['success' => false, 'message' => 'Preencha todos os campos obrigatórios.'];
+        }
+
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return ['success' => false, 'message' => 'E-mail inválido.'];
+        }
+
+        // Verifica e-mail duplicado (ignorando o próprio usuário)
+        $existing = $this->dao->findByEmail($email);
+        if ($existing && $existing->getId() !== $userId) {
+            return ['success' => false, 'message' => 'Já existe outro usuário com esse e-mail.'];
+        }
+
+        // Atualiza ou cria endereço
+        $addrId = $target->getAddressId();
+        $addr   = new Address($addrId ?: null, $street, $complement !== '' ? $complement : null, $city, $state, $neighborhood, $zipCode);
+        $addrId = $this->addressDao->save($addr);
+
+        $hash = $password !== '' ? password_hash($password, PASSWORD_DEFAULT) : $target->getPassword();
+
+        $updated = new User($userId, $name, $phone, $email, $hash, $addrId, null, $target->getRole());
+        $this->dao->save($updated);
+
+        return ['success' => true, 'message' => 'Usuário atualizado com sucesso.'];
+    }
+
+    public function deleteUser(User $actor, int $userId): array {
+        if (!$actor->isSuperUser()) {
+            return ['success' => false, 'message' => 'Acesso negado.'];
+        }
+        if ($actor->getId() === $userId) {
+            return ['success' => false, 'message' => 'Você não pode excluir seu próprio usuário.'];
+        }
+        $target = $this->dao->findById($userId);
+        if (!$target) {
+            return ['success' => false, 'message' => 'Usuário não encontrado.'];
+        }
+        $this->dao->delete($userId);
+        return ['success' => true, 'message' => 'Usuário excluído com sucesso.'];
+    }
 }
