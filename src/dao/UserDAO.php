@@ -123,4 +123,9 @@ class UserDAO {
             ':id' => $userId,
         ]);
     }
+
+    public function delete(int $id): void {
+        $stmt = $this->db->prepare('DELETE FROM users WHERE id = :id');
+        $stmt->execute([':id' => $id]);
+    }
 }
