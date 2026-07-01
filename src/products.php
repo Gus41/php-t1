@@ -167,19 +167,27 @@ $sectionStyle = "font-size:10px;font-weight:500;letter-spacing:0.14em;text-trans
                 ondrop="handleDrop(event)"
                 style="border:2px dashed rgba(240,236,228,0.12);border-radius:10px;padding:28px 20px;text-align:center;cursor:pointer;transition:border-color 0.2s;background:rgba(240,236,228,0.02)">
                 <div style="font-size:28px;margin-bottom:8px">🖼</div>
-                <p id="drop-label" style="font-size:13px;color:rgba(240,236,228,0.5);margin:0 0 4px">Arraste a imagem ou <span style="color:#f0ece4;font-weight:500">clique para selecionar</span></p>
-                <p style="font-size:11px;color:rgba(240,236,228,0.25);margin:0">JPG, PNG, GIF ou WebP</p>
+                <p id="drop-label" style="font-size:13px;color:rgba(240,236,228,0.5);margin:0 0 4px">Arraste imagens ou <span style="color:#f0ece4;font-weight:500">clique para selecionar</span></p>
+                <p style="font-size:11px;color:rgba(240,236,228,0.25);margin:0">JPG, PNG, GIF ou WebP — múltiplas permitidas</p>
               </div>
-              <input type="file" id="img-input" name="image" accept="image/jpeg,image/png,image/gif,image/webp"
-                style="display:none" onchange="previewImage(this.files[0])">
+              <input type="file" id="img-input" name="images[]" accept="image/jpeg,image/png,image/gif,image/webp" multiple
+                style="display:none" onchange="addSelectedImages(this.files)">
 
-              <!-- Preview do novo upload -->
-              <div id="img-preview" style="margin-top:10px"></div>
+              <div id="img-preview" style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px"></div>
 
-              <?php if (!empty($formData['image_path'])): ?>
-                <p style="font-size:11px;color:rgba(240,236,228,0.3);margin:12px 0 8px">Imagem atual (novo upload irá substituir):</p>
-                <img id="current-img" src="<?= htmlspecialchars($formData['image_path']) ?>" alt=""
-                  style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:1px solid rgba(240,236,228,0.12)">
+              <?php if (!empty($formData['images'])): ?>
+                <p style="font-size:11px;color:rgba(240,236,228,0.3);margin:16px 0 8px">Imagens cadastradas (clique no ✕ para remover ao salvar):</p>
+                <div id="existing-images" style="display:flex;flex-wrap:wrap;gap:8px">
+                  <?php foreach ($formData['images'] as $img): ?>
+                    <div class="existing-img-wrap" data-path="<?= htmlspecialchars($img) ?>" style="position:relative">
+                      <input type="hidden" name="keep_images[]" value="<?= htmlspecialchars($img) ?>">
+                      <img src="<?= htmlspecialchars($img) ?>" alt=""
+                        style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:1px solid rgba(240,236,228,0.12)">
+                      <button type="button" onclick="removeExistingImage(this)"
+                        style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;border:none;background:#fda4af;color:#0e0e0e;font-size:11px;cursor:pointer;line-height:1" title="Remover">✕</button>
+                    </div>
+                  <?php endforeach ?>
+                </div>
               <?php endif ?>
             </div>
           </div>
@@ -284,32 +292,73 @@ $sectionStyle = "font-size:10px;font-weight:500;letter-spacing:0.14em;text-trans
   </div>
 </main>
 <script>
-function previewImage(file) {
-  if (!file) return;
-  var container = document.getElementById('img-preview');
-  var label = document.getElementById('drop-label');
-  if (label) label.innerHTML = '<span style="color:#f0ece4;font-weight:500">' + file.name + '</span> selecionada — clique para alterar';
-  var cur = document.getElementById('current-img');
-  if (cur) cur.style.display = 'none';
-  var reader = new FileReader();
-  reader.onload = function(e) {
-    container.innerHTML = '<img src="' + e.target.result + '" style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:1px solid rgba(240,236,228,0.3)">';
-  };
-  reader.readAsDataURL(file);
+var selectedImages = [];
+
+function addSelectedImages(files) {
+  if (!files || !files.length) return;
+  Array.from(files).forEach(function(file) {
+    var key = file.name + '|' + file.size + '|' + file.lastModified;
+    var exists = selectedImages.some(function(item) { return item.key === key; });
+    if (!exists) selectedImages.push({ key: key, file: file });
+  });
+  syncImageInput();
+  previewImages();
 }
+
+function syncImageInput() {
+  var input = document.getElementById('img-input');
+  try {
+    var dt = new DataTransfer();
+    selectedImages.forEach(function(item) { dt.items.add(item.file); });
+    input.files = dt.files;
+  } catch (err) {}
+}
+
+function removeSelectedImage(key) {
+  selectedImages = selectedImages.filter(function(item) { return item.key !== key; });
+  syncImageInput();
+  previewImages();
+}
+
+function previewImages() {
+  var container = document.getElementById('img-preview');
+  container.innerHTML = '';
+  if (!selectedImages.length) return;
+  var label = document.getElementById('drop-label');
+  if (label) label.innerHTML = '<span style="color:#f0ece4;font-weight:500">' + selectedImages.length + ' imagem(ns)</span> selecionada(s) — clique para adicionar mais';
+  selectedImages.forEach(function(item) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var wrap = document.createElement('div');
+      wrap.style.cssText = 'position:relative';
+      var img = document.createElement('img');
+      img.src = e.target.result;
+      img.style.cssText = 'width:72px;height:72px;object-fit:cover;border-radius:8px;border:1px solid rgba(240,236,228,0.3)';
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.textContent = '✕';
+      btn.title = 'Remover';
+      btn.style.cssText = 'position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;border:none;background:#fda4af;color:#0e0e0e;font-size:11px;cursor:pointer;line-height:1';
+      btn.onclick = function() { removeSelectedImage(item.key); };
+      wrap.appendChild(img);
+      wrap.appendChild(btn);
+      container.appendChild(wrap);
+    };
+    reader.readAsDataURL(item.file);
+  });
+}
+
+function removeExistingImage(btn) {
+  var wrap = btn.closest('.existing-img-wrap');
+  if (wrap) wrap.remove();
+}
+
 function handleDrop(e) {
   e.preventDefault();
   document.getElementById('drop-zone').style.borderColor = 'rgba(240,236,228,0.12)';
   var dt = e.dataTransfer;
   if (!dt.files.length) return;
-  // Atribui o arquivo ao input via DataTransfer
-  var input = document.getElementById('img-input');
-  try {
-    var dtz = new DataTransfer();
-    dtz.items.add(dt.files[0]);
-    input.files = dtz.files;
-  } catch(err) {}
-  previewImage(dt.files[0]);
+  addSelectedImages(dt.files);
 }
 </script>
 <?php include 'partials/footer.php'; ?>

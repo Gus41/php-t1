@@ -139,6 +139,18 @@ class ProductDAO {
         return $stmt->fetchAll(PDO::FETCH_COLUMN);
     }
 
+    public function getAllImagePaths(int $productId): array {
+        $paths = $this->findImagesByProductId($productId);
+        if (!empty($paths)) {
+            return $paths;
+        }
+        $product = $this->findById($productId);
+        if ($product && $product->getImagePath()) {
+            return [$product->getImagePath()];
+        }
+        return [];
+    }
+
     public function delete(int $id): void {
         $stmt = $this->db->prepare('DELETE FROM products WHERE id = :id');
         $stmt->execute([':id' => $id]);

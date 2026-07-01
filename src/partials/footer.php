@@ -1,21 +1,17 @@
 <?php
-// Lê flash da sessão antes de limpar
 $_toastFlash = null;
 if (!empty($_SESSION['flash'])) {
     $_toastFlash = $_SESSION['flash'];
     unset($_SESSION['flash']);
 }
 ?>
-<footer style="border-top:1px solid rgba(240,236,228,0.07);padding:24px 32px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;background:#0e0e0e;">
-  <p style="font-size:12px;font-weight:500;color:rgba(240,236,228,0.65);letter-spacing:0.04em;margin:0">
-    &copy; <?= date('Y') ?> — Todos os direitos reservados.
-  </p>
-  <p style="font-size:12px;font-weight:300;color:rgba(240,236,228,0.25);letter-spacing:0.06em;margin:0">
-    Um trabalho NOTA 10
-  </p>
+<footer class="ml-footer">
+  <div class="ml-footer-inner">
+    <p style="margin:0">&copy; <?= date('Y') ?> — Todos os direitos reservados.</p>
+    <p style="margin:0">Um trabalho NOTA 10</p>
+  </div>
 </footer>
 
-<!-- ── Toast container ── -->
 <div id="toast-container" style="position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:10px;pointer-events:none;max-width:360px;width:calc(100% - 48px)"></div>
 
 <script>
@@ -51,8 +47,7 @@ if (!empty($_SESSION['flash'])) {
       'word-break:break-word',
     ].join(';');
     el.innerHTML = msg;
-    var c = document.getElementById('toast-container');
-    c.appendChild(el);
+    document.getElementById('toast-container').appendChild(el);
     requestAnimationFrame(function() { requestAnimationFrame(function() {
       el.style.transform = 'translateX(0)';
       el.style.opacity = '1';

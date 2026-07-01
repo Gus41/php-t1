@@ -18,7 +18,11 @@ if (!$product || ($product->getStatus() !== 'ativo' && !$session->hasRole(['admi
     exit;
 }
 
-$imagePath = $product->getImagePath();
+$images = $productDAO->getAllImagePaths($productId);
+if (empty($images) && $product->getImagePath()) {
+    $images = [$product->getImagePath()];
+}
+$mainImage = $images[0] ?? null;
 
 $stock     = $product->getStock();
 $inCart    = $_SESSION['cart'][$productId]['quantity'] ?? 0;
@@ -40,17 +44,39 @@ include 'partials/header.php';
 
   <div class="rg-detail">
 
-    <!-- ── IMAGEM DO PRODUTO ─────────────────────────────────────────────── -->
+    <!-- ── IMAGENS DO PRODUTO ─────────────────────────────────────────────── -->
     <section>
-      <div style="border:1px solid rgba(240,236,228,0.08);border-radius:18px;overflow:hidden;background:rgba(255,255,255,0.02)">
-        <?php if ($imagePath): ?>
-          <img src="<?= htmlspecialchars($imagePath) ?>"
-            alt="<?= htmlspecialchars($product->getName()) ?>"
-            style="width:100%;height:440px;object-fit:cover;display:block">
-        <?php else: ?>
+      <?php if ($mainImage): ?>
+        <div class="img-carousel img-carousel--detail"
+             id="product-carousel"
+             data-images="<?= htmlspecialchars(json_encode(array_values($images)), ENT_QUOTES) ?>">
+          <div class="img-carousel-frame">
+            <img id="main-product-img" class="img-carousel-img" src="<?= htmlspecialchars($mainImage) ?>"
+              alt="<?= htmlspecialchars($product->getName()) ?>">
+            <?php if (count($images) > 1): ?>
+              <button type="button" class="img-carousel-arrow img-carousel-prev" aria-label="Imagem anterior">‹</button>
+              <button type="button" class="img-carousel-arrow img-carousel-next" aria-label="Próxima imagem">›</button>
+              <span class="img-carousel-counter">1/<?= count($images) ?></span>
+            <?php endif ?>
+          </div>
+        </div>
+      <?php else: ?>
+        <div style="border:1px solid rgba(240,236,228,0.08);border-radius:18px;overflow:hidden;background:rgba(255,255,255,0.02)">
           <div style="width:100%;height:440px;display:flex;align-items:center;justify-content:center;font-size:64px;opacity:0.2">📦</div>
-        <?php endif ?>
-      </div>
+        </div>
+      <?php endif ?>
+      <?php if (count($images) > 1): ?>
+        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+          <?php foreach ($images as $i => $img): ?>
+            <button type="button" data-thumb-index="<?= $i ?>"
+              style="padding:0;border:2px solid <?= $i === 0 ? '#f0ece4' : 'transparent' ?>;border-radius:8px;background:transparent;cursor:pointer;opacity:<?= $i === 0 ? '1' : '0.65' ?>"
+              class="thumb-btn">
+              <img src="<?= htmlspecialchars($img) ?>" alt=""
+                style="width:64px;height:64px;object-fit:cover;border-radius:6px;display:block">
+            </button>
+          <?php endforeach ?>
+        </div>
+      <?php endif ?>
     </section>
 
     <!-- ── INFO + COMPRA ────────────────────────────────────────────────── -->
@@ -131,6 +157,32 @@ include 'partials/header.php';
 </main>
 
 <script>
+document.addEventListener('DOMContentLoaded', function() {
+  var carousel = document.getElementById('product-carousel');
+  var thumbs = document.querySelectorAll('.thumb-btn');
+
+  function highlightThumb(index) {
+    thumbs.forEach(function(btn) {
+      var active = parseInt(btn.getAttribute('data-thumb-index'), 10) === index;
+      btn.style.borderColor = active ? '#f0ece4' : 'transparent';
+      btn.style.opacity = active ? '1' : '0.65';
+    });
+  }
+
+  thumbs.forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var index = parseInt(btn.getAttribute('data-thumb-index'), 10);
+      if (carousel && carousel._carouselShow) carousel._carouselShow(index);
+    });
+  });
+
+  if (carousel) {
+    carousel.addEventListener('carouselchange', function(e) {
+      highlightThumb(e.detail.index);
+    });
+  }
+});
+
 var _maxStock = <?= $stock ?>;
 var _qty      = 1;
 var _pid      = <?= $productId ?>;
